@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>MILK</title>
+  <script src="https://tailwindcss.com"></script>
+  <link href="https://googleapis.com" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; color: #0F172A; -webkit-tap-highlight-color: transparent; }
+    .calc-btn:active { transform: scale(0.94); }
+  </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen bg-[#F9FAFB] shadow-xl relative pb-24">
+
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100 px-5 py-3.5 flex justify-between items-center">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-[#38BDF8] flex items-center justify-center text-white font-extrabold text-lg shadow-sm">🥛</div>
+      <div>
+        <h1 class="font-extrabold text-lg tracking-tight text-[#0369A1] leading-none">MILK</h1>
+        <span class="text-[11px] font-medium text-slate-400">Anno 2026 • Famiglia</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="openAiModal()" class="px-3 py-1.5 rounded-full bg-sky-50 text-[#0369A1] text-xs font-bold flex items-center gap-1">✨ AI</button>
+      <button onclick="switchTab('settings')" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">⚙️</button>
+    </div>
+  </header>
+
+  <main id="app-content" class="p-5 space-y-5"></main>
+
+  <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-100 px-2 py-2 flex justify-around items-center z-30 shadow-md">
+    <button onclick="switchTab('home')" id="nav-home" class="nav-item flex flex-col items-center p-1.5 text-[#0369A1] font-bold">
+      <span class="text-xl">🏠</span><span class="text-[10px] mt-0.5">Home</span>
+    </button>
+    <button onclick="switchTab('budget')" id="nav-budget" class="nav-item flex flex-col items-center p-1.5 text-slate-400 font-medium">
+      <span class="text-xl">📊</span><span class="text-[10px] mt-0.5">Budget</span>
+    </button>
+    <button onclick="openQuickAdd()" class="w-14 h-14 -mt-7 rounded-full bg-[#38BDF8] text-white shadow-lg flex items-center justify-center text-3xl font-bold active:scale-90 transition">+</button>
+    <button onclick="switchTab('movements')" id="nav-movements" class="nav-item flex flex-col items-center p-1.5 text-slate-400 font-medium">
+      <span class="text-xl">🧾</span><span class="text-[10px] mt-0.5">Movimenti</span>
+    </button>
+    <button onclick="switchTab('future')" id="nav-future" class="nav-item flex flex-col items-center p-1.5 text-slate-400 font-medium">
+      <span class="text-xl">🚀</span><span class="text-[10px] mt-0.5">Futuro</span>
+    </button>
+  </nav>
+
+  <!-- MODALE INSERIMENTO RAPIDO -->
+  <div id="quick-add-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex-col justify-end max-w-md mx-auto">
+    <div class="bg-white rounded-t-3xl p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex bg-slate-100 p-1 rounded-xl">
+          <button id="toggle-expense" onclick="setTxType('expense')" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#EF4444] text-white">Spesa</button>
+          <button id="toggle-income" onclick="setTxType('income')" class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500">Entrata</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <select id="tx-user" class="text-xs font-semibold bg-sky-50 text-[#0369A1] px-2.5 py-1.5 rounded-lg outline-none">
+            <option value="Marco">👤 Marco</option>
+            <option value="Sara">👩 Sara</option>
+          </select>
+          <button onclick="closeQuickAdd()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold">✕</button>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 mb-3 text-right">
+        <div id="calc-expression" class="text-xs text-slate-400 h-4 font-medium"></div>
+        <div class="flex justify-between items-baseline">
+          <span class="text-slate-400 font-bold text-lg">€</span>
+          <span id="calc-display" class="text-3xl font-extrabold text-slate-800">0</span>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <div class="text-[11px] font-bold text-slate-400 uppercase mb-1.5">Categoria</div>
+        <div id="quick-categories" class="grid grid-cols-3 gap-2"></div>
+      </div>
+
+      <input type="text" id="tx-note" placeholder="Nota veloce (es. Esselunga, Gasolio...)" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 mb-3 outline-none" />
+
+      <div class="grid grid-cols-4 gap-2 mb-4 select-none">
+        <button onclick="calcInput('7')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">7</button>
+        <button onclick="calcInput('8')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">8</button>
+        <button onclick="calcInput('9')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">9</button>
+        <button onclick="calcOp('/')" class="calc-btn bg-sky-50 text-[#0369A1] py-3 rounded-xl font-bold text-lg">÷</button>
+        <button onclick="calcInput('4')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">4</button>
+        <button onclick="calcInput('5')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">5</button>
+        <button onclick="calcInput('6')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">6</button>
+        <button onclick="calcOp('*')" class="calc-btn bg-sky-50 text-[#0369A1] py-3 rounded-xl font-bold text-lg">×</button>
+        <button onclick="calcInput('1')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">1</button>
+        <button onclick="calcInput('2')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">2</button>
+        <button onclick="calcInput('3')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">3</button>
+        <button onclick="calcOp('-')" class="calc-btn bg-sky-50 text-[#0369A1] py-3 rounded-xl font-bold text-lg">−</button>
+        <button onclick="calcClear()" class="calc-btn bg-red-50 text-red-500 py-3 rounded-xl font-bold text-base">C</button>
+        <button onclick="calcInput('0')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">0</button>
+        <button onclick="calcInput('.')" class="calc-btn bg-slate-100 py-3 rounded-xl font-bold text-lg">,</button>
+        <button onclick="calcOp('+')" class="calc-btn bg-sky-50 text-[#0369A1] py-3 rounded-xl font-bold text-lg">+</button>
+      </div>
+
+      <button onclick="saveTransaction()" class="w-full py-3.5 rounded-2xl bg-[#10B981] text-white font-extrabold text-base shadow-lg">✓ REGISTRA MOVIMENTO</button>
+    </div>
+  </div>
+
+  <!-- MODALE AI -->
+  <div id="ai-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-5 max-w-md mx-auto">
+    <div class="bg-white rounded-3xl p-6 w-full shadow-2xl">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-extrabold text-lg text-[#0369A1]">✨ Smart Prompt AI</h3>
+        <button onclick="closeAiModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold">✕</button>
+      </div>
+      <textarea id="ai-prompt-text" rows="6" readonly class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-700 mb-4 outline-none"></textarea>
+      <div class="flex gap-2">
+        <button onclick="copyAiPrompt()" class="flex-1 py-3 rounded-xl bg-[#38BDF8] text-white font-bold text-xs">📋 Copia Prompt</button>
+        <a id="ai-external-link" href="https://google.com" target="_blank" class="flex-1 py-3 rounded-xl bg-[#0369A1] text-white font-bold text-xs text-center">Apri AI ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE CATEGORIA SPECIALE -->
+  <div id="special-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-5 max-w-md mx-auto">
+    <div class="bg-white rounded-3xl p-6 w-full shadow-2xl max-h-[85vh] overflow-y-auto" id="special-modal-body"></div>
+  </div>
+
+  <script>
+    const CURRENT_MONTH = new Date().getMonth() + 1;
+    const DEFAULT_STATE = {
+      expectedAnnualIncome: 48000,
+      aiUrl: 'https://google.com',
+      fireTargetMonthly: 2000,
+      currentInvested: 35000,
+      allocations: { etf: 15, emergency: 5, vacation: 5 },
+      categories: [
+        { id: 'c1', name: 'Spesa Alimentare', icon: '🛒', budget: 6000, type: 'linear', special: 'none' },
+        { id: 'c2', name: 'Bollette & Casa', icon: '💡', budget: 4200, type: 'linear', special: 'none' },
+        { id: 'c3', name: 'Auto', icon: '🚗', budget: 3200, type: 'linear', special: 'car' },
+        { id: 'c4', name: 'Vacanze', icon: '✈️', budget: 3500, type: 'seasonal', special: 'vacation' },
+        { id: 'c5', name: 'Spese Mediche', icon: '🏥', budget: 1500, type: 'seasonal', special: 'medical' },
+        { id: 'c6', name: 'Extra & Svago', icon: '🍕', budget: 3600, type: 'linear', special: 'none' }
+      ],
+      carDeadlines: [
+        { id: 'd1', title: 'Bollo Auto', date: '2026-12-31', cost: 240 },
+        { id: 'd2', title: 'Tagliando Annuale', date: '2026-11-30', cost: 350 }
+      ],
+      transactions: [
+        { id: 't1', catId: 'c1', amount: 145.50, type: 'expense', user: 'Sara', date: '2026-11-15', note: 'Spesa settimanale' },
+        { id: 't2', catId: 'c3', amount: 65.00, type: 'expense', user: 'Marco', date: '2026-11-12', note: 'Pieno gasolio' },
